@@ -1247,6 +1247,220 @@
       var timer = document.getElementById('quiz-timer');
       timer.style.display = 'none';
 
+      // dd | post stats to console
+      console.log("stats: ", Genki.stats.score);
+      console.log("timer: ", timer.innerHTML);
+      console.log("exercise url: ", Genki.active.exercise[0]);
+      console.log("exercise name: ", Genki.active.exercise[1]);
+      console.log("exercise page: ", Genki.active.exercise[2]);
+
+      // https://dev.to/alexeagleson/how-to-use-indexeddb-to-store-data-for-your-web-application-in-the-browser-1o90
+      // https://www.javascripttutorial.net/web-apis/javascript-indexeddb/
+      // dd | test log to indexedDB
+          // check for IndexedDB support
+      if (!window.indexedDB) {
+          console.log(`Your browser doesn't support IndexedDB`);
+          return;
+      }
+
+      // open the history database with the version 1
+      const request = indexedDB.open('history', 1);
+
+      // create the results object store and indexes
+      request.onupgradeneeded = (event) => {
+          let db = event.target.result;
+
+          // create the results object store
+          // with auto-increment id
+          let store = db.createObjectStore('results', {
+              autoIncrement: false
+          });
+
+          // create an index on the lesson URL property
+          let index = store.createIndex(Genki.active.exercise[0], 'exerciseURL', {
+              unique: true
+          });
+      };
+
+      // handle the error event
+      request.onerror = (event) => {
+          console.error(`Database error: ${event.target.errorCode}`);
+      };
+
+
+      function insertResult(db, result) {
+          // create a new transaction
+          const txn = db.transaction('results', 'readwrite');
+
+          // get the Contacts object store
+          const store = txn.objectStore('results');
+          //
+          let query = store.put(result,"lesson-1/vocab-4");
+
+          // handle success case
+          query.onsuccess = function (event) {
+              console.log(event);
+          };
+
+          // handle the error case
+          query.onerror = function (event) {
+              console.log(event.target.errorCode);
+          }
+
+          // close the database once the
+          // transaction completes
+          txn.oncomplete = function () {
+              db.close();
+          };
+      }
+
+
+      function getResultById(db, id) {
+          const txn = db.transaction('Contacts', 'readonly');
+          const store = txn.objectStore('Contacts');
+
+          let query = store.get(id);
+
+          query.onsuccess = (event) => {
+              if (!event.target.result) {
+                  console.log(`The contact with ${id} not found`);
+              } else {
+                  console.table(event.target.result);
+              }
+          };
+
+          query.onerror = (event) => {
+              console.log(event.target.errorCode);
+          }
+
+          txn.oncomplete = function () {
+              db.close();
+          };
+      };
+
+      function getResultByLesson(db, lesson_url) {
+          const txn = db.transaction('results', 'readonly');
+          const store = txn.objectStore('results');
+
+          // DD TEST TO DISCOVER INDEX
+          //const ddTemp = store.getAbsoluteIndex();
+          //const ddTemp2 = store.getKey();
+          //var myIndextest = store.index('index');
+          //var ddTemp3 = myIndextest.getAllKeys();
+          //ddTemp3.onsuccess = function() {
+          //  console.log(ddTemp3.result);
+          //}
+          //console.log(ddTemp);
+          //console.log(ddTemp2);
+          //console.log(ddTemp3);
+          // get the index from the Object Store
+          const index = store.index('results');
+          // query by indexes
+          let query = index.get(lesson_url);
+
+          // return the result object on success
+          query.onsuccess = (event) => {
+              console.table(query.result); // result objects
+          };
+
+          query.onerror = (event) => {
+              console.log(event.target.errorCode);
+          }
+
+          // close the database connection
+          txn.oncomplete = function () {
+              db.close();
+          };
+      }
+
+                  // handle the success event
+      request.onsuccess = (event) => {
+          const db = event.target.result;
+
+          // insert contacts
+          // insertContact(db, {
+          //     email: 'john.doe@outlook.com',
+          //     firstName: 'John',
+          //     lastName: 'Doe'
+          // });
+
+          insertResult(db, {
+               exerciseURL: Genki.active.exercise[0],
+               problemsSolved: Genki.stats.problems,
+               answersWrong: Genki.stats.mistakes,
+               score: Genki.stats.score,
+               completionTime: timer.innerHTML
+          });
+          // get contact by id 1
+          // getContactById(db, 1);
+
+
+          // get contact by email
+          // getContactByEmail(db, 'jane.doe@gmail.com');
+
+          // get all contacts
+          // getAllContacts(db);
+
+          // deleteContact(db, 1); DD COMMENTED OUT
+
+      };
+
+      //             // handle the success event
+      // request.onsuccess = (event) => {
+      //     const db = event.target.result;
+      //     let temp_lookup = getResultByLesson(db, Genki.active.exercise[0]);
+      //     console.log(temp_lookup);
+      // };
+
+
+
+      function getAllContacts(db) {
+          const txn = db.transaction('Contacts', "readonly");
+          const objectStore = txn.objectStore('Contacts');
+
+          objectStore.openCursor().onsuccess = (event) => {
+              let cursor = event.target.result;
+              if (cursor) {
+                  let contact = cursor.value;
+                  console.log(contact);
+                  // continue next record
+                  cursor.continue();
+              }
+          };
+          // close the database connection
+          txn.oncomplete = function () {
+              db.close();
+          };
+      }
+
+
+      function deleteContact(db, id) {
+          // create a new transaction
+          const txn = db.transaction('Contacts', 'readwrite');
+
+          // get the Contacts object store
+          const store = txn.objectStore('Contacts');
+          //
+          let query = store.delete(id);
+
+          // handle the success case
+          query.onsuccess = function (event) {
+              console.log(event);
+          };
+
+          // handle the error case
+          query.onerror = function (event) {
+              console.log(event.target.errorCode);
+          }
+
+          // close the database once the
+          // transaction completes
+          txn.oncomplete = function () {
+              db.close();
+          };
+
+      }
+
       // show the student their results
       document.getElementById('quiz-result').innerHTML = 
       '<div id="complete-banner" class="center">Quiz Complete!</div>'+
