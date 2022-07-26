@@ -139,6 +139,10 @@
     // exercise list
     exercises : GenkiExercises,
 
+    // DD Addition from MDN lesson (learning-area-ldb repo)
+
+
+
     // scroll to the specified element: Genki.scrollTo('#lesson-3')
     // scrolling can be delayed by passing a value that evaluates to true (true; 1; '.') to the second param; delay
     // the second param is mostly for script generated content, i.e. the exercises, since there's a small delay before the content is visible
@@ -932,7 +936,7 @@
             return el.classList.contains('quiz-answer-zone');
           }
         });
-        
+        // ddTemp3
         // events during drag
         drake.on('drag', function (el) {
           // hide overflow during drag for touch screens
@@ -1248,218 +1252,17 @@
       timer.style.display = 'none';
 
       // dd | post stats to console
-      console.log("stats: ", Genki.stats.score);
-      console.log("timer: ", timer.innerHTML);
-      console.log("exercise url: ", Genki.active.exercise[0]);
-      console.log("exercise name: ", Genki.active.exercise[1]);
-      console.log("exercise page: ", Genki.active.exercise[2]);
+      //console.log("stats: ", Genki.stats.score);
+      //console.log("timer: ", timer.innerHTML);
+      //console.log("exercise url: ", Genki.active.exercise[0]);
+      //console.log("exercise name: ", Genki.active.exercise[1]);
+      //console.log("exercise page: ", Genki.active.exercise[2]);
 
-      // https://dev.to/alexeagleson/how-to-use-indexeddb-to-store-data-for-your-web-application-in-the-browser-1o90
-      // https://www.javascripttutorial.net/web-apis/javascript-indexeddb/
-      // dd | test log to indexedDB
-          // check for IndexedDB support
-      if (!window.indexedDB) {
-          console.log(`Your browser doesn't support IndexedDB`);
-          return;
-      }
+      // DD | call to log values
+      Genki.addData(timer.innerHTML)
 
-      // open the history database with the version 1
-      const request = indexedDB.open('history', 1);
-
-      // create the results object store and indexes
-      request.onupgradeneeded = (event) => {
-          let db = event.target.result;
-
-          // create the results object store
-          // with auto-increment id
-          let store = db.createObjectStore('results', {
-              autoIncrement: false
-          });
-
-          // create an index on the lesson URL property
-          let index = store.createIndex(Genki.active.exercise[0], 'exerciseURL', {
-              unique: true
-          });
-      };
-
-      // handle the error event
-      request.onerror = (event) => {
-          console.error(`Database error: ${event.target.errorCode}`);
-      };
-
-
-      function insertResult(db, result) {
-          // create a new transaction
-          const txn = db.transaction('results', 'readwrite');
-
-          // get the Contacts object store
-          const store = txn.objectStore('results');
-          //
-          let query = store.put(result,"lesson-1/vocab-4");
-
-          // handle success case
-          query.onsuccess = function (event) {
-              console.log(event);
-          };
-
-          // handle the error case
-          query.onerror = function (event) {
-              console.log(event.target.errorCode);
-          }
-
-          // close the database once the
-          // transaction completes
-          txn.oncomplete = function () {
-              db.close();
-          };
-      }
-
-
-      function getResultById(db, id) {
-          const txn = db.transaction('Contacts', 'readonly');
-          const store = txn.objectStore('Contacts');
-
-          let query = store.get(id);
-
-          query.onsuccess = (event) => {
-              if (!event.target.result) {
-                  console.log(`The contact with ${id} not found`);
-              } else {
-                  console.table(event.target.result);
-              }
-          };
-
-          query.onerror = (event) => {
-              console.log(event.target.errorCode);
-          }
-
-          txn.oncomplete = function () {
-              db.close();
-          };
-      };
-
-      function getResultByLesson(db, lesson_url) {
-          const txn = db.transaction('results', 'readonly');
-          const store = txn.objectStore('results');
-
-          // DD TEST TO DISCOVER INDEX
-          //const ddTemp = store.getAbsoluteIndex();
-          //const ddTemp2 = store.getKey();
-          //var myIndextest = store.index('index');
-          //var ddTemp3 = myIndextest.getAllKeys();
-          //ddTemp3.onsuccess = function() {
-          //  console.log(ddTemp3.result);
-          //}
-          //console.log(ddTemp);
-          //console.log(ddTemp2);
-          //console.log(ddTemp3);
-          // get the index from the Object Store
-          const index = store.index('results');
-          // query by indexes
-          let query = index.get(lesson_url);
-
-          // return the result object on success
-          query.onsuccess = (event) => {
-              console.table(query.result); // result objects
-          };
-
-          query.onerror = (event) => {
-              console.log(event.target.errorCode);
-          }
-
-          // close the database connection
-          txn.oncomplete = function () {
-              db.close();
-          };
-      }
-
-                  // handle the success event
-      request.onsuccess = (event) => {
-          const db = event.target.result;
-
-          // insert contacts
-          // insertContact(db, {
-          //     email: 'john.doe@outlook.com',
-          //     firstName: 'John',
-          //     lastName: 'Doe'
-          // });
-
-          insertResult(db, {
-               exerciseURL: Genki.active.exercise[0],
-               problemsSolved: Genki.stats.problems,
-               answersWrong: Genki.stats.mistakes,
-               score: Genki.stats.score,
-               completionTime: timer.innerHTML
-          });
-          // get contact by id 1
-          // getContactById(db, 1);
-
-
-          // get contact by email
-          // getContactByEmail(db, 'jane.doe@gmail.com');
-
-          // get all contacts
-          // getAllContacts(db);
-
-          // deleteContact(db, 1); DD COMMENTED OUT
-
-      };
-
-      //             // handle the success event
-      // request.onsuccess = (event) => {
-      //     const db = event.target.result;
-      //     let temp_lookup = getResultByLesson(db, Genki.active.exercise[0]);
-      //     console.log(temp_lookup);
-      // };
-
-
-
-      function getAllContacts(db) {
-          const txn = db.transaction('Contacts', "readonly");
-          const objectStore = txn.objectStore('Contacts');
-
-          objectStore.openCursor().onsuccess = (event) => {
-              let cursor = event.target.result;
-              if (cursor) {
-                  let contact = cursor.value;
-                  console.log(contact);
-                  // continue next record
-                  cursor.continue();
-              }
-          };
-          // close the database connection
-          txn.oncomplete = function () {
-              db.close();
-          };
-      }
-
-
-      function deleteContact(db, id) {
-          // create a new transaction
-          const txn = db.transaction('Contacts', 'readwrite');
-
-          // get the Contacts object store
-          const store = txn.objectStore('Contacts');
-          //
-          let query = store.delete(id);
-
-          // handle the success case
-          query.onsuccess = function (event) {
-              console.log(event);
-          };
-
-          // handle the error case
-          query.onerror = function (event) {
-              console.log(event.target.errorCode);
-          }
-
-          // close the database once the
-          // transaction completes
-          txn.oncomplete = function () {
-              db.close();
-          };
-
-      }
+      // DD | call to display console log of data
+      Genki.displayData();
 
       // show the student their results
       document.getElementById('quiz-result').innerHTML = 
@@ -1510,7 +1313,7 @@
       document.getElementById('exercise').className += ' quiz-over';
       Genki.scrollTo('#complete-banner', true); // jump to the quiz results
     },
-    
+
     
     // resets exercise state, allowing students to redo quizzes without reloading the page
     reset : function (skipModal) {
@@ -1751,7 +1554,115 @@
       });
     },
     
-    
+
+    addData : function (timer_value) {
+        // prevent default - we don't want the form to submit in the conventional way
+        //e.preventDefault();
+        console.log("timer_value in addfunction: ",timer_value);
+        // grab the values entered into the form fields and store them in an object ready for being inserted into the DB
+        //const newItem = { title: titleInput.value, body: bodyInput.value };
+        const newItem = {
+                     exerciseURL: Genki.active.exercise[0],
+                     problemsSolved: Genki.stats.problems,
+                     answersWrong: Genki.stats.mistakes,
+                     score: Genki.stats.score,
+                     // completionTime: Genki.timer.innerHTML
+                     completionTime: timer_value
+                };
+        // console.log(Genki.timer.getTimeValues());
+        // console.log(newItem);
+        // open a read/write db transaction, ready for adding the data
+        const transaction = db.transaction(['results_os'], 'readwrite');
+
+        // call an object store that's already been added to the database
+        const objectStore = transaction.objectStore('results_os');
+
+        // Make a request to add our newItem object to the object store
+        // DD - replace add with put
+        //const addRequest = objectStore.add(newItem);
+        const addRequest = objectStore.add(newItem);
+
+        // addRequest.addEventListener('success', () => {
+        //   // Clear the form, ready for adding the next entry
+        //   titleInput.value = '';
+        //   bodyInput.value = '';
+        // });
+
+        // Report on the success of the transaction completing, when everything is done
+        transaction.addEventListener('complete', () => {
+          console.log('Transaction completed: database modification finished.');
+
+          // update the display of data to show the newly added item, by running displayData() again.
+          // displayData();
+        });
+
+        transaction.addEventListener('error', () => console.log('Transaction not opened due to error'));
+    },
+
+    // Define the displayData() function
+    displayData : function () {
+      // Here we empty the contents of the list element each time the display is updated
+      // If you ddn't do this, you'd get duplicates listed each time a new note is added
+      // while (list.firstChild) {
+      //   list.removeChild(list.firstChild);
+      // }
+
+      // Open our object store and then get a cursor - which iterates through all the
+      // different data items in the store
+      const objectStore = db.transaction('results_os').objectStore('results_os');
+      objectStore.openCursor().addEventListener('success', e => {
+        // Get a reference to the cursor
+        const cursor = e.target.result;
+
+        // If there is still another data item to iterate through, keep running this code
+        if(cursor) {
+          // Create a list item, h3, and p to put each data item inside when displaying it
+          // structure the HTML fragment, and append it inside the list
+          // const listItem = document.createElement('li');
+          // const h3 = document.createElement('h3');
+          // const para = document.createElement('p');
+          //
+          // listItem.appendChild(h3);
+          // listItem.appendChild(para);
+          // list.appendChild(listItem);
+
+          // Put the data from the cursor inside the h3 and para
+          //h3.textContent = cursor.value.title;
+          //para.textContent = cursor.value.body;
+
+          // PRINT THE DATA TO TEST CONSOLE
+          console.log("stats: ", cursor.value.score);
+          console.log("timer: ", cursor.value.completionTime);
+          console.log("exercise url: ", cursor.value.exerciseURL);
+
+          // Store the ID of the data item inside an attribute on the listItem, so we know
+          // which item it corresponds to. This will be useful later when we want to delete items
+          //listItem.setAttribute('data-note-id', cursor.value.id);
+
+          // Create a button and place it inside each listItem
+          // const deleteBtn = document.createElement('button');
+          // listItem.appendChild(deleteBtn);
+          // deleteBtn.textContent = 'Delete';
+
+          // Set an event handler so that when the button is clicked, the deleteItem()
+          // function is run
+          // deleteBtn.addEventListener('click', deleteItem);
+
+          // Iterate to the next item in the cursor
+          cursor.continue();
+        } else {
+          // Again, if list item is empty, display a 'No notes stored' message
+          // if(!list.firstChild) {
+          //   const listItem = document.createElement('li');
+          //   listItem.textContent = 'No notes stored.'
+          //   list.appendChild(listItem);
+          // }
+          // if there are no more cursor items to iterate through, say so
+          console.log('Notes all displayed');
+        }
+      });
+    },
+
     // functions that check the value of input fields
     check : {
       // checks the value of the current input and automatically moves onto the next input if the value is correct
@@ -2703,6 +2614,49 @@
       
       // define Genki in the global namespace
       window.Genki = this;
+
+      // // DD - initialize and create repo
+      // // Create an instance of a db object for us to store the open database in
+      // //let db;
+      //
+      // // Open our database; it is created if it doesn't already exist
+      // // (see the upgradeneeded handler below)
+      // //const openRequest = window.indexedDB.open('notes_db', 1);
+      // const openRequest = window.indexedDB.open('results_db', 1);
+      //
+      // // error handler signifies that the database didn't open successfully
+      // openRequest.addEventListener('error', () => console.error('Database failed to open'));
+      //
+      // // success handler signifies that the database opened successfully
+      // openRequest.addEventListener('success', () => {
+      //   console.log('Database opened succesfully');
+      //
+      //   // Store the opened database object in the db variable. This is used a lot below
+      //   db = openRequest.result;
+      //
+      // });
+      // // Set up the database tables if this has not already been done
+      // openRequest.addEventListener('upgradeneeded', e => {
+      //
+      //   // Grab a reference to the opened database
+      //   db = e.target.result;
+      //
+      //   // Create an objectStore to store our notes in (basically like a single table)
+      //   // including a auto-incrementing key
+      //   //const objectStore = db.createObjectStore('notes_os', { keyPath: 'id', autoIncrement:true });
+      //   const objectStore = db.createObjectStore('results_os', { keyPath: 'id', autoIncrement:true });
+      //
+      //   // Define what data items the objectStore will contain
+      //   //objectStore.createIndex('title', 'title', { unique: false });
+      //   //objectStore.createIndex('body', 'body', { unique: false });
+      //   objectStore.createIndex('exerciseURL', 'exerciseURL', { unique: true });
+      //   objectStore.createIndex('problemsSolved', 'problemsSolved', { unique: false });
+      //   objectStore.createIndex('answersWrong', 'answersWrong', { unique: false });
+      //   objectStore.createIndex('score', 'score', { unique: false });
+      //   objectStore.createIndex('completionTime', 'completionTime', { unique: false });
+      //
+      //   console.log('Database setup complete');
+      // });
     }
     
   };
@@ -2751,5 +2705,47 @@
   
   
   // initial setup
+  // DD - initialize and create repo
+  // Create an instance of a db object for us to store the open database in
+  let db;
+
+  // Open our database; it is created if it doesn't already exist
+  // (see the upgradeneeded handler below)
+  //const openRequest = window.indexedDB.open('notes_db', 1);
+  const openRequest = window.indexedDB.open('results_db', 1);
+
+  // error handler signifies that the database didn't open successfully
+  openRequest.addEventListener('error', () => console.error('Database failed to open'));
+
+  // success handler signifies that the database opened successfully
+  openRequest.addEventListener('success', () => {
+    console.log('Database opened succesfully');
+
+    // Store the opened database object in the db variable. This is used a lot below
+    db = openRequest.result;
+
+  });
+  // Set up the database tables if this has not already been done
+  openRequest.addEventListener('upgradeneeded', e => {
+
+    // Grab a reference to the opened database
+    db = e.target.result;
+
+    // Create an objectStore to store our notes in (basically like a single table)
+    // including a auto-incrementing key
+    //const objectStore = db.createObjectStore('notes_os', { keyPath: 'id', autoIncrement:true });
+    const objectStore = db.createObjectStore('results_os', { keyPath: 'id', autoIncrement:true });
+
+    // Define what data items the objectStore will contain
+    //objectStore.createIndex('title', 'title', { unique: false });
+    //objectStore.createIndex('body', 'body', { unique: false });
+    objectStore.createIndex('exerciseURL', 'exerciseURL', { unique: true });
+    objectStore.createIndex('problemsSolved', 'problemsSolved', { unique: false });
+    objectStore.createIndex('answersWrong', 'answersWrong', { unique: false });
+    objectStore.createIndex('score', 'score', { unique: false });
+    objectStore.createIndex('completionTime', 'completionTime', { unique: false });
+
+    console.log('Database setup complete');
+  });
   Genki.init();
 }(window, document));
