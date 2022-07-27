@@ -19,7 +19,7 @@
     previousTimer: 0,
     previousExercise: 'none',
     previousExerciseType: 'none',
-    previousExerciseID: 0,
+    previousExerciseDBID: 10000000,
 
     canNotify : 'Notification' in window,
     
@@ -1277,9 +1277,11 @@
       Genki.displayData(Genki.active.exercise[0]);
 
       // DD | After completing quiz, compare current score to historical score.  If current is better, replace
-      //if (Genki.stats.score > previousScore) {
-      //  Genki.deleteData()
-      //}
+      if (Genki.stats.score > Genki.previousScore) {
+        Genki.deleteData(Genki.previousExerciseDBID);
+        console.log("delected previous entry with ID: ", Genki.previousExerciseDBID);
+        Genki.addData(timer.innerHTML);
+      }
 
       // DD | call to log values
       Genki.addData(timer.innerHTML)
@@ -1660,7 +1662,7 @@
             const previousTimerInside = cursor.value.completionTime;
             const previousexerciseURLInside = cursor.value.exerciseURL;
             const previousExerciseTypeInside = cursor.value.exerciseURL;
-            const previousExerciseIDInside = cursor.value.id;
+            const previousExerciseDBIDInside = cursor.value.id;
             console.log("previous stats: ", previousScoreInside);
             console.log("previous timer: ", previousTimerInside);
             console.log("previous exercise url: ", previousexerciseURLInside);
@@ -1668,7 +1670,7 @@
             Genki.previousTimer = previousTimerInside;
             Genki.previousExercise = previousexerciseURLInside;
             Genki.previousExerciseType = previousExerciseTypeInside;
-            Genki.previousExerciseID = previousExerciseIDInside;
+            Genki.previousExerciseDBID = previousExerciseDBIDInside;
           }
 
           // Store the ID of the data item inside an attribute on the listItem, so we know
@@ -1700,23 +1702,23 @@
     },
 
     // Define the deleteItem() function
-    deleteData : function (e) {
+    deleteData : function (DBID) {
       // retrieve the name of the task we want to delete. We need
       // to convert it to a number before trying it use it with IDB; IDB key
       // values are type-sensitive.
-      const noteId = Number(e.target.parentNode.getAttribute('data-note-id'));
+      //const noteId = Number(e.target.parentNode.getAttribute('data-note-id'));
 
       // open a database transaction and delete the task, finding it using the id we retrieved above
       const transaction = db.transaction(['results_os'], 'readwrite');
       const objectStore = transaction.objectStore('results_os');
-      const deleteRequest = objectStore.delete(noteId);
+      const deleteRequest = objectStore.delete(DBID);
 
       // report that the data item has been deleted
       transaction.addEventListener('complete', () => {
         // delete the parent of the button
         // which is the list item, so it is no longer displayed
-        e.target.parentNode.parentNode.removeChild(e.target.parentNode);
-        console.log(`Note ${noteId} deleted.`);
+        //e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+        console.log(`Note ${DBID} deleted.`);
 
         // Again, if list item is empty, display a 'No notes stored' message
         // if(!list.firstChild) {
