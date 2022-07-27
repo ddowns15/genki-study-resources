@@ -13,7 +13,14 @@
          score : 0, // the student's score
        exclude : 0  // answers to exclude, mostly for text-only segments in multi-choice quizzes
     },
-    
+
+    // DD | base variables for checking historical values
+    previousScore : 0,
+    previousTimer: 0,
+    previousExercise: 'none',
+    previousExerciseType: 'none',
+    previousExerciseID: 0,
+
     canNotify : 'Notification' in window,
     
     // checks if touchscreen controls
@@ -1104,6 +1111,7 @@
 
       Genki.timer = timer;
 
+
       // indicate the exercise has been loaded in
       document.getElementById('exercise').className += ' content-loaded ' + (o.type == 'stroke' ? 'stroke-quiz multi' : o.type) + '-quiz';
 
@@ -1258,11 +1266,26 @@
       //console.log("exercise name: ", Genki.active.exercise[1]);
       //console.log("exercise page: ", Genki.active.exercise[2]);
 
+      // DD | Call for historical data on this file to check previous scores
+      //let currentPreviousScore = Genki.displayData(Genki.active.exercise[0]);
+      //console.log("this", Genki.displayData(Genki.active.exercise[0]));
+      //console.log("endquiz lookback score: ", currentPreviousScore.previousScore);
+      //console.log("endquiz lookback time: ", currentPreviousScore.previousTimer);
+      //console.log("endquiz lookback url: ", currentPreviousScore.previousexerciseURL);
+
+      // DD | call to lookup previous results for this quiz and add them to global level under Genki
+      Genki.displayData(Genki.active.exercise[0]);
+
+      // DD | After completing quiz, compare current score to historical score.  If current is better, replace
+      //if (Genki.stats.score > previousScore) {
+      //  Genki.deleteData()
+      //}
+
       // DD | call to log values
       Genki.addData(timer.innerHTML)
 
       // DD | call to display console log of data
-      Genki.displayData();
+      //Genki.displayData(Genki.active.exercise[0]);
 
       // show the student their results
       document.getElementById('quiz-result').innerHTML = 
@@ -1600,7 +1623,7 @@
     },
 
     // Define the displayData() function
-    displayData : function () {
+    displayData : function (lesson_url) {
       // Here we empty the contents of the list element each time the display is updated
       // If you ddn't do this, you'd get duplicates listed each time a new note is added
       // while (list.firstChild) {
@@ -1631,9 +1654,22 @@
           //para.textContent = cursor.value.body;
 
           // PRINT THE DATA TO TEST CONSOLE
-          console.log("stats: ", cursor.value.score);
-          console.log("timer: ", cursor.value.completionTime);
-          console.log("exercise url: ", cursor.value.exerciseURL);
+          //console.log("cursor: ", cursor.values());
+          if(lesson_url == cursor.value.exerciseURL) {
+            const previousScoreInside = cursor.value.score;
+            const previousTimerInside = cursor.value.completionTime;
+            const previousexerciseURLInside = cursor.value.exerciseURL;
+            const previousExerciseTypeInside = cursor.value.exerciseURL;
+            const previousExerciseIDInside = cursor.value.id;
+            console.log("previous stats: ", previousScoreInside);
+            console.log("previous timer: ", previousTimerInside);
+            console.log("previous exercise url: ", previousexerciseURLInside);
+            Genki.previousScore = previousScoreInside;
+            Genki.previousTimer = previousTimerInside;
+            Genki.previousExercise = previousexerciseURLInside;
+            Genki.previousExerciseType = previousExerciseTypeInside;
+            Genki.previousExerciseID = previousExerciseIDInside;
+          }
 
           // Store the ID of the data item inside an attribute on the listItem, so we know
           // which item it corresponds to. This will be useful later when we want to delete items
@@ -1660,6 +1696,34 @@
           // if there are no more cursor items to iterate through, say so
           console.log('Notes all displayed');
         }
+      });
+    },
+
+    // Define the deleteItem() function
+    deleteData : function (e) {
+      // retrieve the name of the task we want to delete. We need
+      // to convert it to a number before trying it use it with IDB; IDB key
+      // values are type-sensitive.
+      const noteId = Number(e.target.parentNode.getAttribute('data-note-id'));
+
+      // open a database transaction and delete the task, finding it using the id we retrieved above
+      const transaction = db.transaction(['results_os'], 'readwrite');
+      const objectStore = transaction.objectStore('results_os');
+      const deleteRequest = objectStore.delete(noteId);
+
+      // report that the data item has been deleted
+      transaction.addEventListener('complete', () => {
+        // delete the parent of the button
+        // which is the list item, so it is no longer displayed
+        e.target.parentNode.parentNode.removeChild(e.target.parentNode);
+        console.log(`Note ${noteId} deleted.`);
+
+        // Again, if list item is empty, display a 'No notes stored' message
+        // if(!list.firstChild) {
+        //   const listItem = document.createElement('li');
+        //   listItem.textContent = 'No notes stored.';
+        //   list.appendChild(listItem);
+        // }
       });
     },
 
