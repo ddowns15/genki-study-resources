@@ -20,6 +20,8 @@
     previousExercise: 'none',
     previousExerciseType: 'none',
     previousExerciseDBID: 10000000,
+    currentExerciseType: 'none',
+    freshUpdate: 20,
 
     canNotify : 'Notification' in window,
     
@@ -467,6 +469,7 @@
 
       // # 1. DRAG AND DROP #
       if (o.type == 'drag') {
+        Genki.currentExerciseType = o.type;
         var quiz = '<div id="quiz-info">' + o.info + '</div><div id="question-list">',
             dropList = '<div id="drop-list">',
             keysQ = [],
@@ -531,6 +534,7 @@
 
       // # 2. KANA DRAG AND DROP #
       else if (o.type == 'kana') {
+        Genki.currentExerciseType = o.type;
         var quiz = '<div id="quiz-info">' + o.info + '</div><div id="question-list" class="clear">',
             answers = '<div id="answer-list">',
             kanaList = [],
@@ -572,6 +576,7 @@
 
       // # 3. WRITING PRACTICE #
       else if (o.type == 'writing') {
+        Genki.currentExerciseType = o.type;
         var quiz = '<div id="quiz-info">' + o.info + '<br>If you don\'t know how to type in Japanese on your computer, please visit our help page by <a href="../../../help/writing/' + Genki.local + '" target="_blank">clicking here</a>.</div><div id="question-list">',
             columns = o.columns,
             width = 'style="width:' + (100 / (columns + 1)) + '%;"',
@@ -622,6 +627,7 @@
 
       // # 4. MULTIPLE CHOICE #
       else if (o.type == 'multi') {
+        Genki.currentExerciseType = o.type;
         var quiz = '<div id="quiz-info">' + o.info + '</div><div id="question-list">',
             answers = '<div id="answer-list">',
             option = 65, // used for tagging answers as A(65), B(66), C(67)..
@@ -698,6 +704,7 @@
       
       // # 5. FILL IN THE BLANKS #
       else if (o.type == 'fill') {
+        Genki.currentExerciseType = o.type;
         var helper = false;
         
         // check if furigana is present and add a toggle button
@@ -809,6 +816,7 @@
       
       // # 6. STROKE ORDER #
       else if (o.type == 'stroke') {
+        Genki.currentExerciseType = o.type;
         var quiz = '<div id="quiz-info">' + o.info + '</div><div id="question-list">',
             answers = '<div id="answer-list">',
             strokeOrderHidden = storageOK && localStorage.strokeOrderVisible == 'false',
@@ -873,6 +881,7 @@
       
       // # 7. DRAWING PRACTICE #
       else if (o.type == 'drawing') {
+        Genki.currentExerciseType = o.type;
         var quiz = '<div id="quiz-info">' + o.info + '</div><div id="question-list">',
             guideHidden = storageOK && localStorage.tracingGuideVisible == 'false',
             columns = o.columns,
@@ -1276,15 +1285,27 @@
       // DD | call to lookup previous results for this quiz and add them to global level under Genki
       Genki.displayData(Genki.active.exercise[0]);
 
-      // DD | After completing quiz, compare current score to historical score.  If current is better, replace
-      if (Genki.stats.score > Genki.previousScore) {
-        Genki.deleteData(Genki.previousExerciseDBID);
-        console.log("delected previous entry with ID: ", Genki.previousExerciseDBID);
+      //DD | After completing quiz, compare current score to historical score.  If current is better, replace
+      if (Genki.freshUpdate == 20) {
         Genki.addData(timer.innerHTML);
-      }
+      };
+      if (Genki.freshUpdate == 10) {
+        if (Genki.previousExerciseType == Genki.currentExerciseType) {
+          if (Genki.stats.score >= Genki.previousScore) {
+            Genki.deleteData(Genki.previousExerciseDBID);
+            console.log("delected previous entry with ID: ", Genki.previousExerciseDBID);
+            Genki.addData(timer.innerHTML);
+            Genki.freshUpdate = 20;
+          }
+        }
+      };
+
+      // DD | Log everything method; can be replaced by above section which deletes previous log for that activity
+      // NOTE: Had issues above; didnt delete on every test
+      //Genki.addData(timer.innerHTML);
 
       // DD | call to log values
-      Genki.addData(timer.innerHTML)
+     // Genki.addData(timer.innerHTML)
 
       // DD | call to display console log of data
       //Genki.displayData(Genki.active.exercise[0]);
@@ -1586,13 +1607,17 @@
         console.log("timer_value in addfunction: ",timer_value);
         // grab the values entered into the form fields and store them in an object ready for being inserted into the DB
         //const newItem = { title: titleInput.value, body: bodyInput.value };
+        var now = new Date();
+        var cleanDate = now.toUTCString();
         const newItem = {
                      exerciseURL: Genki.active.exercise[0],
                      problemsSolved: Genki.stats.problems,
                      answersWrong: Genki.stats.mistakes,
                      score: Genki.stats.score,
                      // completionTime: Genki.timer.innerHTML
-                     completionTime: timer_value
+                     completionTime: timer_value,
+                     dateTime: cleanDate,
+                     exerciseType: Genki.currentExerciseType
                 };
         // console.log(Genki.timer.getTimeValues());
         // console.log(newItem);
@@ -1661,7 +1686,7 @@
             const previousScoreInside = cursor.value.score;
             const previousTimerInside = cursor.value.completionTime;
             const previousexerciseURLInside = cursor.value.exerciseURL;
-            const previousExerciseTypeInside = cursor.value.exerciseURL;
+            const previousExerciseTypeInside = cursor.value.exerciseType;
             const previousExerciseDBIDInside = cursor.value.id;
             console.log("previous stats: ", previousScoreInside);
             console.log("previous timer: ", previousTimerInside);
@@ -1671,6 +1696,8 @@
             Genki.previousExercise = previousexerciseURLInside;
             Genki.previousExerciseType = previousExerciseTypeInside;
             Genki.previousExerciseDBID = previousExerciseDBIDInside;
+            Genki.previousExerciseType = previousExerciseTypeInside;
+            Genki.freshUpdate = 10;
           }
 
           // Store the ID of the data item inside an attribute on the listItem, so we know
