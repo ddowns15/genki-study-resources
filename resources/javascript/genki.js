@@ -1286,23 +1286,23 @@
       Genki.displayData(Genki.active.exercise[0]);
 
       //DD | After completing quiz, compare current score to historical score.  If current is better, replace
-      if (Genki.freshUpdate == 20) {
-        Genki.addData(timer.innerHTML);
-      };
-      if (Genki.freshUpdate == 10) {
-        if (Genki.previousExerciseType == Genki.currentExerciseType) {
-          if (Genki.stats.score >= Genki.previousScore) {
-            Genki.deleteData(Genki.previousExerciseDBID);
-            console.log("delected previous entry with ID: ", Genki.previousExerciseDBID);
-            Genki.addData(timer.innerHTML);
-            Genki.freshUpdate = 20;
-          }
-        }
-      };
+      // if (Genki.freshUpdate == 20) {
+      //   Genki.addData(timer.innerHTML);
+      // };
+      // if (Genki.freshUpdate == 10) {
+      //   if (Genki.previousExerciseType == Genki.currentExerciseType) {
+      //     if (Genki.stats.score >= Genki.previousScore) {
+      //       Genki.deleteData(Genki.previousExerciseDBID);
+      //       console.log("delected previous entry with ID: ", Genki.previousExerciseDBID);
+      //       Genki.addData(timer.innerHTML);
+      //       Genki.freshUpdate = 20;
+      //     }
+      //   }
+      // };
 
       // DD | Log everything method; can be replaced by above section which deletes previous log for that activity
       // NOTE: Had issues above; didnt delete on every test
-      //Genki.addData(timer.innerHTML);
+      Genki.addData(timer.innerHTML);
 
       // DD | call to log values
      // Genki.addData(timer.innerHTML)
@@ -2832,7 +2832,7 @@
     // Define what data items the objectStore will contain
     //objectStore.createIndex('title', 'title', { unique: false });
     //objectStore.createIndex('body', 'body', { unique: false });
-    objectStore.createIndex('exerciseURL', 'exerciseURL', { unique: true });
+    objectStore.createIndex('exerciseURL', 'exerciseURL', { unique: false });
     objectStore.createIndex('problemsSolved', 'problemsSolved', { unique: false });
     objectStore.createIndex('answersWrong', 'answersWrong', { unique: false });
     objectStore.createIndex('score', 'score', { unique: false });

@@ -22,7 +22,7 @@
     <meta name="twitter:creator" content="@SethC1995">
 
     <link rel="stylesheet" href="../resources/css/stylesheet.min.css">
-    <script src="../resources/javascript/head.js"></script>
+    <script src="../resources/javascript/head_testing.js"></script>
     <script src="../resources/javascript/ga.js" async></script>
   </head>
 
@@ -185,7 +185,7 @@
           </ul>
           <h3 id="workbook-1" class="workbook-title">Workbook (Genki I Workbook: p.16-22)</h3>
           <ul>
-            <li><a href="lesson-1/workbook-1/">Workbook: XはYです</a> (p.16; I &amp; II)</li>
+            <li id="lesson-1/workbook-1"><a href="lesson-1/workbook-1/">Workbook: XはYです</a> (p.16; I &amp; II)<p>aa</p></li>
             <li><a href="lesson-1/workbook-2/">Workbook: Question Sentences</a> (p.17; I &amp; II)</li>
             <li><a href="lesson-1/workbook-3/">Workbook: Noun の Noun</a> (p.18; I &amp; II)</li>
             <li><a href="lesson-1/workbook-4/">Workbook: Time and Telephone Numbers</a> (p.19; I &amp; II)</li>
@@ -214,7 +214,13 @@
             <li><a href="lesson-1/literacy-wb-7/">Workbook: Hiragana (Double Consonants/Long Vowels)</a> (p.127; I, II, III, &amp; IV)</li>
           </ul>
         </div>
-        
+        <script>
+          var tag = document.createElement("p");
+          var text = document.createTextNode("Tutorix is the best e-learning platform");
+          tag.appendChild(text);
+          var element = document.getElementById("lesson-1/workbook-1");
+          element.appendChild(tag);
+        </script>
         <h2 id="lesson-2" class="lesson-title">Lesson 2: Shopping (Genki I: p.56-81)</h2>
         <div class="lesson-summary">
           <div class="lesson-point">Ask and answer how much things cost</div>
@@ -1677,7 +1683,43 @@
         
       </div>
     </div>
-    
+
+    <script>
+      let db;
+      var request = window.indexedDB.open("results_db", 1);
+      request.onerror = function (event)
+      {
+        console.log('The database is opened failed');
+      };
+      request.onsuccess = function (event)
+      {
+        db = request.result;
+        console.log('The database is opened successfully');
+        const objectStore = db.transaction("results_os").objectStore("results_os");
+        objectStore.openCursor().onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            console.log(`Name for SSN ${cursor.key} is ${cursor.value.exerciseURL}`);
+            ///ADD PART FOR INJECTING
+            var tag = document.createElement("p");
+            var text = document.createTextNode(`Completed ${cursor.value.exerciseType}: ${cursor.value.score} in ${cursor.value.completionTime} on ${cursor.value.dateTime}`);
+            tag.appendChild(text);
+            console.log(`${cursor.value.exerciseURL}`);
+            // var namedid = cursor.value.exerciseURL;
+            var namedid = 'lesson-1/workbook-1';
+            console.log(namedid);
+            var element = document.getElementById(namedid);
+            console.log(element);
+            element.appendChild(tag);
+            ///CONCLUDE INJECTION
+            cursor.continue();
+          } else {
+            console.log("No more entries!");
+          }
+        };
+      };
+    </script>
+
     <footer class="clear">
       <ul class="footer-left">
         <li><a href="./" id="footer-home">Home</a></li>

@@ -657,71 +657,117 @@
   };
 
 
+
+  //DD | Inject previous scores
+  // initial setup
+  // DD - initialize and create repo
+  // Create an instance of a db object for us to store the open database in
+  let db;
+
+  // Open our database; it is created if it doesn't already exist
+  // (see the upgradeneeded handler below)
+  //const openRequest = window.indexedDB.open('notes_db', 1);
+  const openRequest = window.indexedDB.open('results_db', 1);
+
+  // error handler signifies that the database didn't open successfully
+  openRequest.addEventListener('error', () => console.error('Database failed to open'));
+
+  // success handler signifies that the database opened successfully
+  openRequest.addEventListener('success', () => {
+    console.log('Database opened succesfully');
+
+    // Store the opened database object in the db variable. This is used a lot below
+    db = openRequest.result;
+  });
+  // Set up the database tables if this has not already been done
+  openRequest.addEventListener('upgradeneeded', e => {
+    // Grab a reference to the opened database
+    db = e.target.result;
+
+    // Create an objectStore to store our notes in (basically like a single table)
+    // including a auto-incrementing key
+    //const objectStore = db.createObjectStore('notes_os', { keyPath: 'id', autoIncrement:true });
+    const objectStore = db.createObjectStore('results_os', {keyPath: 'id', autoIncrement: true});
+
+    // Define what data items the objectStore will contain
+    //objectStore.createIndex('title', 'title', { unique: false });
+    //objectStore.createIndex('body', 'body', { unique: false });
+    objectStore.createIndex('exerciseURL', 'exerciseURL', {unique: true});
+    objectStore.createIndex('problemsSolved', 'problemsSolved', {unique: false});
+    objectStore.createIndex('answersWrong', 'answersWrong', {unique: false});
+    objectStore.createIndex('score', 'score', {unique: false});
+    objectStore.createIndex('completionTime', 'completionTime', {unique: false});
+
+    console.log('Database setup complete');
+  });
+
+
+
   // # LIMITED MODE WARNING #
   // If cookies are blocked, Genki Study Resources will run in limited mode. Settings are not remembered in this mode and certain features, such as dark mode, are unavailable.
   if (!navigator.cookieEnabled) {
     console.warn('Cookies are not available either due to host or browser settings. Genki Study Resources will function in limited mode where settings are not remembered and certain features are unavailable. This issue can commonly be resolved by enabling third-party cookies. Please see the following page for help.\nhttps://sethclydesdale.github.io/genki-study-resources/help/stuck-loading/\n\nIf the issue still occurs after enabling third-party cookies, please contact the developer for further assistance.\nhttps://github.com/SethClydesdale/genki-study-resources/issues');
   }
 
-  // Adding checks to completed items
-  // function updateCompleted() {
-  //   // Here we empty the contents of the list element each time the display is updated
-  //   // If you ddn't do this, you'd get duplicates listed each time a new note is added
-  //   //while (list.firstChild) {
-  //   //  list.removeChild(list.firstChild);
-  //   //}
-  //
-  //   // Open our object store and then get a cursor - which iterates through all the
-  //   // different data items in the store
-  //   const objectStore = db.transaction('results_os').objectStore('results_os');
-  //   objectStore.openCursor().addEventListener('success', e => {
-  //     // Get a reference to the cursor
-  //     const cursor = e.target.result;
-  //
-  //     // If there is still another data item to iterate through, keep running this code
-  //     if(cursor) {
-  //       // Create a list item, h3, and p to put each data item inside when displaying it
-  //       // structure the HTML fragment, and append it inside the list
-  //       //const listItem = document.createElement('li');
-  //       //const h3 = document.createElement('h3');
-  //       //const para = document.createElement('p');
-  //       let checkingTest = document.getElementById(cursor.value.exerciseURL)
-  //       console.log(checkingTest)
-  //
-  //       //listItem.appendChild(h3);
-  //       //listItem.appendChild(para);
-  //       //list.appendChild(listItem);
-  //
-  //       // Put the data from the cursor inside the h3 and para
-  //       //h3.textContent = cursor.value.title;
-  //       //para.textContent = cursor.value.body;
-  //
-  //       // Store the ID of the data item inside an attribute on the listItem, so we know
-  //       // which item it corresponds to. This will be useful later when we want to delete items
-  //       //listItem.setAttribute('data-note-id', cursor.value.id);
-  //
-  //       // Create a button and place it inside each listItem
-  //       //const deleteBtn = document.createElement('button');
-  //       //listItem.appendChild(deleteBtn);
-  //       //deleteBtn.textContent = 'Delete';
-  //
-  //       // Set an event handler so that when the button is clicked, the deleteItem()
-  //       // function is run
-  //       //deleteBtn.addEventListener('click', deleteItem);
-  //
-  //       // Iterate to the next item in the cursor
-  //       cursor.continue();
-  //     //} else {
-  //       // Again, if list item is empty, display a 'No notes stored' message
-  //       //if(!list.firstChild) {
-  //         //const listItem = document.createElement('li');
-  //         //listItem.textContent = 'No notes stored.'
-  //         //list.appendChild(listItem);
-  //       //}
-  //       // if there are no more cursor items to iterate through, say so
-  //       console.log('Notes all displayed');
-  //     }
-  //   });
-  // };
+  //Adding checks to completed items
+  function updateCompleted() {
+    // Here we empty the contents of the list element each time the display is updated
+    // If you ddn't do this, you'd get duplicates listed each time a new note is added
+    //while (list.firstChild) {
+    //  list.removeChild(list.firstChild);
+    //}
+
+    // Open our object store and then get a cursor - which iterates through all the
+    // different data items in the store
+    const objectStore = db.transaction('results_os').objectStore('results_os');
+    objectStore.openCursor().addEventListener('success', e => {
+      // Get a reference to the cursor
+      const cursor = e.target.result;
+
+      // If there is still another data item to iterate through, keep running this code
+      if(cursor) {
+        // Create a list item, h3, and p to put each data item inside when displaying it
+        // structure the HTML fragment, and append it inside the list
+        //const listItem = document.createElement('li');
+        //const h3 = document.createElement('h3');
+        //const para = document.createElement('p');
+        let checkingTest = document.getElementById(cursor.value.exerciseURL)
+        console.log(checkingTest)
+
+        //listItem.appendChild(h3);
+        //listItem.appendChild(para);
+        //list.appendChild(listItem);
+
+        // Put the data from the cursor inside the h3 and para
+        //h3.textContent = cursor.value.title;
+        //para.textContent = cursor.value.body;
+
+        // Store the ID of the data item inside an attribute on the listItem, so we know
+        // which item it corresponds to. This will be useful later when we want to delete items
+        //listItem.setAttribute('data-note-id', cursor.value.id);
+
+        // Create a button and place it inside each listItem
+        //const deleteBtn = document.createElement('button');
+        //listItem.appendChild(deleteBtn);
+        //deleteBtn.textContent = 'Delete';
+
+        // Set an event handler so that when the button is clicked, the deleteItem()
+        // function is run
+        //deleteBtn.addEventListener('click', deleteItem);
+
+        // Iterate to the next item in the cursor
+        cursor.continue();
+      //} else {
+        // Again, if list item is empty, display a 'No notes stored' message
+        //if(!list.firstChild) {
+          //const listItem = document.createElement('li');
+          //listItem.textContent = 'No notes stored.'
+          //list.appendChild(listItem);
+        //}
+        // if there are no more cursor items to iterate through, say so
+        console.log('Notes all displayed');
+      }
+    });
+  };
 
 }(window, document));
